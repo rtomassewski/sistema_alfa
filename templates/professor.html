@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="15"> <title>Painel do Professor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    
+    {% if not guiche %}
+    <div class="container mt-5">
+        <div class="card p-4 mx-auto shadow" style="max-width: 400px;">
+            <h3 class="text-center">Acesso Professor</h3>
+            <form action="/login_prof" method="POST">
+                <input type="text" name="nome" class="form-control mb-2" placeholder="Seu Nome" required>
+                <input type="number" name="guiche" class="form-control mb-3" placeholder="Número do Guichê" required>
+                <button type="submit" class="btn btn-success w-100">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    {% else %}
+    <nav class="navbar navbar-dark bg-dark p-3">
+        <span class="navbar-brand">Olá, {{ nome }} (Guichê {{ guiche }})</span>
+        <a href="/logout" class="btn btn-outline-light btn-sm">Sair</a>
+    </nav>
+
+    <div class="container mt-4">
+        <h4>Alunos na Fila:</h4>
+        <div class="list-group mt-3">
+            {% for a in atendimentos %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0">{{ a.aluno }}</h5>
+                    <small class="text-muted">Deseja falar com: {{ a.professor_destino }}</small>
+                </div>
+                <form action="/chamar" method="POST">
+                    <input type="hidden" name="id" value="{{ a.id }}">
+                    <button type="submit" class="btn btn-primary">🔔 CHAMAR</button>
+                </form>
+            </div>
+            {% else %}
+                <div class="alert alert-secondary">Nenhum aluno aguardando no momento.</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</body>
+</html>

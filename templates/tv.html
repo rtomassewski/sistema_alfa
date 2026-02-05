@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel TV</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body { background-color: #1a1a1a; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: 'Arial', sans-serif; }
+        h1 { font-size: 3rem; color: #888; margin-bottom: 20px; }
+        #nome { font-size: 8rem; font-weight: bold; color: #ffc107; text-transform: uppercase; margin: 0; }
+        #info { font-size: 4rem; margin-top: 20px; }
+        .piscar { animation: blink 0.5s infinite alternate; }
+        @keyframes blink { from { opacity: 1; } to { opacity: 0.2; } }
+    </style>
+</head>
+<body>
+    <h1>CHAMADA ATUAL</h1>
+    <div id="nome">...</div>
+    <div id="info">Aguardando</div>
+
+    <script>
+        var socket = io();
+        const synth = window.speechSynthesis;
+
+        socket.on('chamar_aluno', function(data) {
+            const displayNome = document.getElementById("nome");
+            const displayInfo = document.getElementById("info");
+
+            // Atualiza tela
+            displayNome.innerText = data.aluno;
+            displayInfo.innerText = "Guichê " + data.guiche + " - " + data.professor;
+            
+            // Efeito visual
+            displayNome.classList.add("piscar");
+            setTimeout(() => displayNome.classList.remove("piscar"), 6000);
+
+            // Toca um sino (opcional) e fala
+            let utterance = new SpeechSynthesisUtterance("Atenção, " + data.aluno + ". Dirija-se ao guichê " + data.guiche);
+            utterance.lang = 'pt-BR';
+            utterance.rate = 1.1; // Velocidade da fala
+            synth.speak(utterance);
+        });
+    </script>
+</body>
+</html>
