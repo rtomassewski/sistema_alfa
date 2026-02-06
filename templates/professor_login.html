@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head><title>Login Docente</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="d-flex align-items-center justify-content-center vh-100 bg-dark">
+    <div class="card p-4" style="width: 350px;">
+        <h3 class="text-center mb-3">Acesso Docente</h3>
+        <form action="/login_prof" method="POST">
+            <label>Quem é você?</label>
+            <select name="professor_id" class="form-select mb-3">
+                {% for p in professores %}
+                <option value="{{ p.id }}">{{ p.nome }} - {{ p.materia }}</option>
+                {% endfor %}
+            </select>
+            
+            <label>Está em qual Guichê?</label>
+            <input type="number" name="guiche" class="form-control mb-3" placeholder="Ex: 1, 2, 3..." required>
+            
+            <button type="submit" class="btn btn-success w-100">Entrar</button>
+        </form>
+        
+        <hr>
+        <small class="text-muted d-block text-center mb-2">Não está na lista?</small>
+        <button class="btn btn-outline-secondary btn-sm w-100" type="button" data-bs-toggle="collapse" data-bs-target="#novoProf">Cadastrar Novo</button>
+        <div class="collapse mt-2" id="novoProf">
+            <form action="/admin/novo_prof" method="POST" target="_blank">
+                <input type="text" name="nome" class="form-control form-control-sm mb-1" placeholder="Nome" required>
+                <input type="text" name="materia" class="form-control form-control-sm mb-1" placeholder="Matéria" required>
+                <button class="btn btn-primary btn-sm w-100">Salvar</button>
+            </form>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

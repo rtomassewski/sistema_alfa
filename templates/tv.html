@@ -1,44 +1,74 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Painel TV</title>
+    <title>TV Escolar</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #1a1a1a; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: 'Arial', sans-serif; }
-        h1 { font-size: 3rem; color: #888; margin-bottom: 20px; }
-        #nome { font-size: 8rem; font-weight: bold; color: #ffc107; text-transform: uppercase; margin: 0; }
-        #info { font-size: 4rem; margin-top: 20px; }
+        body { background-color: #121212; color: white; overflow: hidden; height: 100vh; }
+        .lado-esquerdo { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; border-right: 2px solid #333; }
+        .lado-direito { height: 100vh; padding: 20px; background-color: #1e1e1e; }
+        
+        #nome-atual { font-size: 6rem; font-weight: bold; color: #ffc107; text-align: center; line-height: 1.1; }
+        #info-atual { font-size: 3rem; margin-top: 20px; color: #ccc; }
+        
+        .historico-item { background: #333; margin-bottom: 10px; padding: 15px; border-radius: 10px; border-left: 5px solid #0d6efd; }
+        .historico-nome { font-size: 1.5rem; font-weight: bold; }
+        .historico-guiche { font-size: 1.2rem; color: #aaa; }
+        
         .piscar { animation: blink 0.5s infinite alternate; }
-        @keyframes blink { from { opacity: 1; } to { opacity: 0.2; } }
+        @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
     </style>
 </head>
 <body>
-    <h1>CHAMADA ATUAL</h1>
-    <div id="nome">...</div>
-    <div id="info">Aguardando</div>
+    <div class="row m-0">
+        <div class="col-8 lado-esquerdo">
+            <h2 class="text-uppercase text-muted mb-4">Chamada Atual</h2>
+            <div id="nome-atual">...</div>
+            <div id="info-atual">AGUARDANDO</div>
+        </div>
+
+        <div class="col-4 lado-direito">
+            <h3 class="mb-4 border-bottom pb-2">Últimos Chamados</h3>
+            <div id="lista-historico">
+                </div>
+        </div>
+    </div>
 
     <script>
         var socket = io();
         const synth = window.speechSynthesis;
 
-        socket.on('chamar_aluno', function(data) {
-            const displayNome = document.getElementById("nome");
-            const displayInfo = document.getElementById("info");
-
-            // Atualiza tela
-            displayNome.innerText = data.aluno;
-            displayInfo.innerText = "Guichê " + data.guiche + " - " + data.professor;
+        socket.on('atualizar_tv', function(data) {
+            // 1. Atualiza o Principal
+            const nomeEl = document.getElementById("nome-atual");
+            const infoEl = document.getElementById("info-atual");
             
-            // Efeito visual
-            displayNome.classList.add("piscar");
-            setTimeout(() => displayNome.classList.remove("piscar"), 6000);
+            nomeEl.innerText = data.atual.aluno;
+            infoEl.innerText = "Guichê " + data.atual.guiche + " (" + data.atual.professor + ")";
+            
+            nomeEl.classList.add("piscar");
+            setTimeout(() => nomeEl.classList.remove("piscar"), 6000);
 
-            // Toca um sino (opcional) e fala
-            let utterance = new SpeechSynthesisUtterance("Atenção, " + data.aluno + ". Dirija-se ao guichê " + data.guiche);
-            utterance.lang = 'pt-BR';
-            utterance.rate = 1.1; // Velocidade da fala
-            synth.speak(utterance);
+            // 2. Atualiza o Histórico (Lista Lateral)
+            const listaEl = document.getElementById("lista-historico");
+            listaEl.innerHTML = ""; // Limpa lista antiga
+            
+            // Pula o primeiro do histórico se ele for igual ao atual, ou exibe todos
+            data.historico.forEach(function(item) {
+                let div = document.createElement("div");
+                div.className = "historico-item";
+                div.innerHTML = `
+                    <div class="historico-nome">${item.aluno}</div>
+                    <div class="historico-guiche">${item.prof}</div>
+                `;
+                listaEl.appendChild(div);
+            });
+
+            // 3. Voz
+            let fala = new SpeechSynthesisUtterance("Atenção " + data.atual.aluno + ". Guichê " + data.atual.guiche);
+            fala.lang = 'pt-BR';
+            synth.speak(fala);
         });
     </script>
 </body>
