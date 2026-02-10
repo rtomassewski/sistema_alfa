@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Administração Escolar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-5 mb-4">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">Cadastrar Novo Professor</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/admin">
+                            <div class="mb-3">
+                                <label>Nome do Professor</label>
+                                <input type="text" name="nome" class="form-control" placeholder="Ex: Prof. João" required>
+                            </div>
+                            <div class="mb-3">
+                                <label>Matéria / Setor</label>
+                                <input type="text" name="materia" class="form-control" placeholder="Ex: Geografia" required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Salvar Cadastro</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="mt-3 text-center">
+                    <a href="/professor" class="btn btn-outline-secondary">Ir para Painel do Professor</a>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Professores Cadastrados</h4>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Matéria</th>
+                                    <th class="text-end">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in professores %}
+                                <tr>
+                                    <td>{{ p.nome }}</td>
+                                    <td>{{ p.materia }}</td>
+                                    <td class="text-end">
+                                        <a href="/admin/delete/{{ p.id }}" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que quer apagar este professor?')">Excluir</a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="3" class="text-center">Nenhum professor cadastrado.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

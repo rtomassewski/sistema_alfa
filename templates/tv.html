@@ -36,40 +36,59 @@
     </div>
 
     <script>
-        var socket = io();
-        const synth = window.speechSynthesis;
+    var socket = io();
+    const synth = window.speechSynthesis;
+    var vozesDisponiveis = [];
 
-        socket.on('atualizar_tv', function(data) {
-            // 1. Atualiza o Principal
-            const nomeEl = document.getElementById("nome-atual");
-            const infoEl = document.getElementById("info-atual");
-            
-            nomeEl.innerText = data.atual.aluno;
-            infoEl.innerText = "Guichê " + data.atual.guiche + " (" + data.atual.professor + ")";
-            
-            nomeEl.classList.add("piscar");
-            setTimeout(() => nomeEl.classList.remove("piscar"), 6000);
+    // Carrega as vozes assim que o navegador estiver pronto
+    function carregarVozes() {
+        vozesDisponiveis = synth.getVoices();
+    }
+    
+    // Alguns navegadores demoram para carregar as vozes, isso garante que carregou
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = carregarVozes;
+    }
 
-            // 2. Atualiza o Histórico (Lista Lateral)
-            const listaEl = document.getElementById("lista-historico");
-            listaEl.innerHTML = ""; // Limpa lista antiga
-            
-            // Pula o primeiro do histórico se ele for igual ao atual, ou exibe todos
-            data.historico.forEach(function(item) {
-                let div = document.createElement("div");
-                div.className = "historico-item";
-                div.innerHTML = `
-                    <div class="historico-nome">${item.aluno}</div>
-                    <div class="historico-guiche">${item.prof}</div>
-                `;
-                listaEl.appendChild(div);
-            });
-
-            // 3. Voz
-            let fala = new SpeechSynthesisUtterance("Atenção " + data.atual.aluno + ". Guichê " + data.atual.guiche);
-            fala.lang = 'pt-BR';
-            synth.speak(fala);
+    socket.on('atualizar_tv', function(data) {
+        // Atualiza visual (igual antes)
+        const nomeEl = document.getElementById("nome-atual");
+        document.getElementById("nome-atual").innerText = data.atual.aluno;
+        document.getElementById("info-atual").innerText = "Guichê " + data.atual.guiche + " (" + data.atual.professor + ")";
+        
+        // Atualiza lista lateral (igual antes)
+        const listaEl = document.getElementById("lista-historico");
+        listaEl.innerHTML = "";
+        data.historico.forEach(function(item) {
+            let div = document.createElement("div");
+            div.className = "historico-item";
+            div.innerHTML = `<div class="historico-nome">${item.aluno}</div><div class="historico-guiche">${item.prof}</div>`;
+            listaEl.appendChild(div);
         });
-    </script>
+
+        // --- NOVA LÓGICA DE VOZ ---
+        let texto = "Atenção " + data.atual.aluno + ". Guichê " + data.atual.guiche;
+        let fala = new SpeechSynthesisUtterance(texto);
+        
+        // Tenta encontrar uma voz PT-BR melhor
+        // 1. Procura voz do Google (geralmente mais natural)
+        let vozEscolhida = vozesDisponiveis.find(v => v.name.includes('Google') && v.lang.includes('pt-BR'));
+        
+        // 2. Se não achar Google, tenta qualquer uma PT-BR
+        if (!vozEscolhida) {
+            vozEscolhida = vozesDisponiveis.find(v => v.lang.includes('pt-BR'));
+        }
+
+        if (vozEscolhida) {
+            fala.voice = vozEscolhida;
+        }
+
+        fala.lang = 'pt-BR';
+        fala.rate = 1.0; // Velocidade (0.5 lento, 2.0 rápido)
+        fala.pitch = 1.0; // Tom da voz
+        
+        synth.speak(fala);
+    });
+</script>
 </body>
 </html>
