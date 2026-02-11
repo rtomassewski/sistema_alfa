@@ -34,27 +34,20 @@ class Atendimento(db.Model):
 # Cria o banco de dados
 with app.app_context():
     db.create_all()
-    # Se quiser que os professores de teste parem de aparecer, mantenha as linhas abaixo comentadas
-    # if not Professor.query.first():
-    #     db.session.add(Professor(nome="Prof. Carlos", materia="Matemática"))
-    #     db.session.commit()
 
 # --- ROTAS DE NAVEGAÇÃO ---
 
 @app.route('/')
 def index():
-    # Agora a página inicial é o MENU principal
     return render_template('index.html')
 
 @app.route('/aluno')
 def aluno_page():
-    # Tela onde o aluno escolhe o professor e pega a senha
     professores = Professor.query.all()
     return render_template('aluno.html', professores=professores)
 
 @app.route('/tv')
 def tv():
-    # Tela da TV que mostra os chamados
     return render_template('tv.html')
 
 # --- LÓGICA DO ALUNO ---
@@ -67,7 +60,6 @@ def agendar():
     if not prof_id:
         return redirect(url_for('aluno_page'))
 
-    # VERIFICAÇÃO: Apenas 1 atendimento por dia por nome de aluno
     ja_agendou = Atendimento.query.filter_by(
         aluno_nome=nome_aluno, 
         data_solicitacao=date.today()
@@ -91,7 +83,6 @@ def professor_painel():
     if 'prof_id' not in session:
         return render_template('professor_login.html', professores=Professor.query.all())
     
-    # Filtra apenas alunos designados ao professor logado
     lista = Atendimento.query.filter_by(
         professor_id=session['prof_id'], 
         status='aguardando'
@@ -112,7 +103,6 @@ def login_prof():
         session['prof_id'] = prof.id
         session['prof_nome'] = prof.nome
         session['guiche'] = guiche
-        return redirect(url_for('professor_painel'))
     return redirect(url_for('professor_painel'))
 
 @app.route('/chamar', methods=['POST'])
@@ -123,7 +113,6 @@ def chamar():
         atendimento.hora_chamada = datetime.now()
         db.session.commit()
         
-        # Busca histórico para a TV
         historico = Atendimento.query.filter_by(status='chamado')\
             .order_by(Atendimento.hora_chamada.desc()).limit(5).all()
         
@@ -144,9 +133,9 @@ def sair():
     session.clear()
     return redirect(url_for('index'))
 
-# --- AREA ADMINISTRATIVA (CADASTRO) ---
-# --- CONFIGURAÇÃO DE SEGURANÇA ---
-ADMIN_PASSWORD = "thomassoft" # <--- MUDE PARA A SENHA QUE VOCÊ QUISER
+# --- AREA ADMINISTRATIVA (COM PROTEÇÃO) ---
+
+ADMIN_PASSWORD = "thomassoft" 
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -161,7 +150,7 @@ def admin_login():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_page():
-    # VERIFICAÇÃO: Se não estiver logado, manda para o login
+    # Se não tiver a marcação na sessão, bloqueia
     if not session.get('admin_logado'):
         return redirect(url_for('admin_login'))
     
@@ -175,32 +164,22 @@ def admin_page():
     professores = Professor.query.all()
     return render_template('admin.html', professores=professores)
 
-@app.route('/admin/logout')
-def admin_logout():
-    session.pop('admin_logado', None)
-    return redirect(url_for('index'))
-
-@app.route('/admin', methods=['GET', 'POST'])
-def admin_page():
-    if request.method == 'POST':
-        nome = request.form['nome']
-        materia = request.form['materia']
-        db.session.add(Professor(nome=nome, materia=materia))
-        db.session.commit()
-        return redirect(url_for('admin_page'))
-    
-    professores = Professor.query.all()
-    return render_template('admin.html', professores=professores)
-
 @app.route('/admin/delete/<int:id>')
 def delete_prof(id):
+    if not session.get('admin_logado'):
+        return redirect(url_for('admin_login'))
+        
     prof = Professor.query.get(id)
     if prof:
-        # Antes de deletar o professor, removemos os atendimentos dele para não dar erro
         Atendimento.query.filter_by(professor_id=id).delete()
         db.session.delete(prof)
         db.session.commit()
     return redirect(url_for('admin_page'))
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logado', None)
+    return redirect(url_for('index'))
 
 # --- INICIALIZAÇÃO ---
 
