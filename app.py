@@ -145,6 +145,40 @@ def sair():
     return redirect(url_for('index'))
 
 # --- AREA ADMINISTRATIVA (CADASTRO) ---
+# --- CONFIGURAÇÃO DE SEGURANÇA ---
+ADMIN_PASSWORD = "thomassoft" # <--- MUDE PARA A SENHA QUE VOCÊ QUISER
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        senha_digitada = request.form.get('senha')
+        if senha_digitada == ADMIN_PASSWORD:
+            session['admin_logado'] = True
+            return redirect(url_for('admin_page'))
+        else:
+            return render_template('admin_login.html', erro="Senha incorreta!")
+    return render_template('admin_login.html')
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin_page():
+    # VERIFICAÇÃO: Se não estiver logado, manda para o login
+    if not session.get('admin_logado'):
+        return redirect(url_for('admin_login'))
+    
+    if request.method == 'POST':
+        nome = request.form['nome']
+        materia = request.form['materia']
+        db.session.add(Professor(nome=nome, materia=materia))
+        db.session.commit()
+        return redirect(url_for('admin_page'))
+    
+    professores = Professor.query.all()
+    return render_template('admin.html', professores=professores)
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logado', None)
+    return redirect(url_for('index'))
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_page():
